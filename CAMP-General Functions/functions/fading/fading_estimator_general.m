@@ -34,8 +34,8 @@ function [params,bin_start_edges,approximated_per,loss_values] = fading_estimato
             initial_param_value = mle(fading_data_linear,'distribution',dist_handle_object.dist_name);
         else
             temp_index_start = max(1,j-20);
-            initial_param_value = mean(params(temp_index_start:j,:),1);
-            initial_param_value = mle(fading_data_linear,'distribution',dist_handle_object.dist_name);
+            initial_param_value = median(params(temp_index_start:j,:),1,'omitnan');
+%             initial_param_value = mle(fading_data_linear,'distribution',dist_handle_object.dist_name);
         end
         per_value = sum(per_stat(range_start:range_end,1))./ sum(per_stat(range_start:range_end,2));
         approximated_per(i)=per_value;

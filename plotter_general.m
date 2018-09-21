@@ -86,7 +86,13 @@ for mode_index = 1:length(dataset_files)
         parameter_path = fullfile(parameter_folder,param_file_name);
         plot_folder_path = fullfile('./Plots',relative_experiment_folder_path);
         %% Load Params
-        load(parameter_path);
+        
+        try
+            load(parameter_path);
+        catch err
+            display(err)
+            continue
+        end
         fading_params = medfilt1(fading_params,med_filt_size);
         ll = ll(1:size(fading_params,1),:);
         ll_dscrt = ll_dscrt(1:size(fading_params,1),:);
