@@ -1,0 +1,20 @@
+function [data_censored,per] = censor_function(data,noise_level,pkt_size)
+%CENSOR_FUNCTION Summary of this function goes here
+%   Detailed explanation goes here
+    switch nargs
+        case 1
+            noise_level = -98;
+            pkt_size = 316;
+        case 2
+            pkt_size = 316;
+    a = 0.4997;
+    b = 3.557;
+    c = 1.292;
+    d = 0.5;
+    sinr = data - noise_level;
+    result = a * erf((sinr-b)/c) + d;
+    result(result>1) = 1;
+    result(result<0) = 0;
+    rand
+end
+
