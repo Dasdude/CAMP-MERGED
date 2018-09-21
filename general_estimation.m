@@ -2,11 +2,21 @@ clc
 clearvars -except data_set
 close all
 clear
+set(groot,'defaultTextInterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
 % axis tight
 addpath(genpath('.'))
 'GENERAL Estimator'
-experiment_name = input('Experiment Name?','s');
+
 dataset_name = 'Highway with HOV';
+dataset_folders = dir('Dataset');
+for file_idx =3:length(dataset_folders)
+    display(sprintf('[%d] %s',file_idx-2,dataset_folders(file_idx).name))
+end
+dataset_idx = str2num(input('dataset idx?','s'))+2;
+clc
+dataset_name = dataset_folders(dataset_idx).name;
+experiment_name = input('Experiment Name?','s');
 if isempty(experiment_name)
     experiment_name = 'Debug';
 end
@@ -34,7 +44,7 @@ CARRIER_FREQ=5.89*10^9;
 TX_HEIGHT = 1.4787;
 RX_HEIGHT = TX_HEIGHT;
 LIGHT_SPEED=3*10^8;
-TRUNCATION_VALUE= -91;
+TRUNCATION_VALUE= -90;
 lambda=LIGHT_SPEED/CARRIER_FREQ;
 d_min = 1;
 noise_level = -98;pkt_size=-1;

@@ -23,7 +23,7 @@ for i =1:length(data)
     red_data = data_scaled(data_scaled<model_pdf_trunc_val);
     if per_rate(i)~=0
 %         distance_loss = sum(((log(red_data)-log(model_pdf_trunc_val))*length(red_data)./length(data)).^2);
-        distance_loss = sum(abs(log(red_data)-log(model_pdf_trunc_val)).^5);
+        distance_loss = sum(abs(red_data-model_pdf_trunc_val).^2);
     else
         distance_loss=0;
     end
