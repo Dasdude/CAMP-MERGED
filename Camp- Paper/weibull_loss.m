@@ -2,7 +2,7 @@ clc
 clear
 close all
 
-load Sample_Data.mat
+load data_sample.mat
 lam = .3:.05:3;
 k = .2:.05:2.5;
 x = fading_linear_cell{100};

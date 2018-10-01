@@ -36,9 +36,9 @@ for i =1:length(data)
     ll_list_descreet(i) = -mean(log2(model_pmf_samples));
     
     
-    data_scaled =pdf_nak_estimated.random(1e4,1);
-    data_upper = dbm2linear((linear2dbm(data_scaled)+.5));
-    data_lower = dbm2linear((linear2dbm(data_scaled)-.5));
+%     data_scaled =pdf_nak_estimated.random(1e4,1);
+    data_upper = dbm2linear(data_scaled+.5);
+    data_lower = dbm2linear(data_scaled-.5);
     model_pmf_samples = cdf(pdf_nak_estimated,data_upper)-cdf(pdf_nak_estimated,data_lower);
     model_pmf_samples = model_pmf_samples*(1/(1-per_rate));
     model_pmf_samples(model_pmf_samples<eps)=eps;

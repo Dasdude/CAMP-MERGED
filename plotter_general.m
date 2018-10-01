@@ -93,7 +93,7 @@ for mode_index = 1:length(dataset_files)
             display(err)
             continue
         end
-        fading_params = medfilt1(fading_params,med_filt_size);
+%         fading_params = medfilt1(fading_params,med_filt_size);
         ll = ll(1:size(fading_params,1),:);
         ll_dscrt = ll_dscrt(1:size(fading_params,1),:);
         ll_rate = ll_rate(1:size(fading_params,1),:);
@@ -137,39 +137,43 @@ for mode_index = 1:length(dataset_files)
         percentiles_rssi = percentile_array([5,10,25,50,75,90,95],data_dbm_cell);
         percentiles_rssi_per_inc = percentile_array_per([5,10,25,50,75,90,95],data_dbm_cell,per*100);
 %         percentiles_rssi_gen_per_inc = percentile_array_per([5,10,25,50,75,90,95],generated_rssi_dbm_truncated,generated_per*100);
-        figure;plot(percentiles_generated(:,[2,4,6]));hold on ;plot(percentiles_rssi_per_inc(:,[2,4,6]));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend('10% model','50% model','90% model','10% field','50% field','90% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 10',output_extension]);
-        figure;plot(percentiles_generated_trunc(:,[2,4,6]));hold on ;plot(percentiles_rssi(:,[2,4,6]));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('10% model','50% model','90% model','10% field','50% field','90% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 10',output_extension]);
-        figure;plot(percentiles_generated(:,[3,4,5]));hold on ;plot(percentiles_rssi_per_inc(:,[3,4,5]));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('25% model','50% model','75% model','25% field','50% field','75% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 25',output_extension]);
-        figure;plot(percentiles_generated_trunc(:,[3,4,5]));hold on ;plot(percentiles_rssi(:,[3,4,5]));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('25% model','50% model','75% model','25% field','50% field','75% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 25',output_extension]);
-        figure;plot(percentiles_generated(:,[1,4,7]));hold on ;plot(percentiles_rssi_per_inc(:,[1,4,7]));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('5% model','50% model','95% model','5% field','50% field','95% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 5',output_extension]);
-        figure;plot(percentiles_generated_trunc(:,[1,4,7]));hold on ;plot(percentiles_rssi(:,[1,4,7]));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('5% model','50% model','95% model','5% field','50% field','95% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 5',output_extension]);
-        %% PER Plot
-        figure;plot(packet_loss_stat(:,2));hold;plot(packet_loss_stat(:,2)-packet_loss_stat(:,1));xlabel('Distance(m)');ylabel('Number of Samples');grid on;title([minimal_experiment_name,'Total Samples vs Received Samples']);legend('Total Samples','Recieved Samples');saveas(gcf,[plot_folder_path,'/','Samples Received vs Total',output_extension]);
-        figure; plot(100*generated_per);hold on;plot(100*per);grid on;title([minimal_experiment_name,'PER Value Comparison']);ylabel('Rate');xlabel('Distance (m)');legend('Model','Field','Location','northwest');saveas(gcf,[plot_folder_path,'/','PER Comparison',output_extension]);
-        figure;plot(loss_vals);title([minimal_experiment_name,'loss']);grid on;saveas(gcf,[plot_folder_path,'/','Loss',output_extension]);
-        %% Plot Parameters
-        for param_idx = 1:dist_obj.get_dof
-            param_name = dist_obj.dist_params_names{param_idx};
-            figure;plot(fading_params(:,param_idx));title(sprintf('%s Parameter: %s - Distance',minimal_experiment_name,param_name));grid on;xlabel('Distance (m)');ylabel(sprintf('%s Value',param_name));saveas(gcf,fullfile(plot_folder_path,sprintf('%s_distance%s',param_name,output_extension)));
-        end
-        %% LOG Likelihood
+%         figure;plot(percentiles_generated(:,[2,4,6]));hold on ;plot(percentiles_rssi_per_inc(:,[2,4,6]));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend('10% model','50% model','90% model','10% field','50% field','90% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 10',output_extension]);
+%         figure;plot(percentiles_generated_trunc(:,[2,4,6]));hold on ;plot(percentiles_rssi(:,[2,4,6]));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('10% model','50% model','90% model','10% field','50% field','90% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 10',output_extension]);
+%         figure;plot(percentiles_generated(:,[3,4,5]));hold on ;plot(percentiles_rssi_per_inc(:,[3,4,5]));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('25% model','50% model','75% model','25% field','50% field','75% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 25',output_extension]);
+%         figure;plot(percentiles_generated_trunc(:,[3,4,5]));hold on ;plot(percentiles_rssi(:,[3,4,5]));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('25% model','50% model','75% model','25% field','50% field','75% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 25',output_extension]);
+%         figure;plot(percentiles_generated(:,[1,4,7]));hold on ;plot(percentiles_rssi_per_inc(:,[1,4,7]));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('5% model','50% model','95% model','5% field','50% field','95% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 5',output_extension]);
+%         figure;plot(percentiles_generated_trunc(:,[1,4,7]));hold on ;plot(percentiles_rssi(:,[1,4,7]));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('5% model','50% model','95% model','5% field','50% field','95% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 5',output_extension]);
+%         %% PER Plot
+%         figure;plot(packet_loss_stat(:,2));hold;plot(packet_loss_stat(:,2)-packet_loss_stat(:,1));xlabel('Distance(m)');ylabel('Number of Samples');grid on;title([minimal_experiment_name,'Total Samples vs Received Samples']);legend('Total Samples','Recieved Samples');saveas(gcf,[plot_folder_path,'/','Samples Received vs Total',output_extension]);
+%         figure; plot(100*generated_per);hold on;plot(100*per);grid on;title([minimal_experiment_name,'PER Value Comparison']);ylabel('Rate');xlabel('Distance (m)');legend('Model','Field','Location','northwest');saveas(gcf,[plot_folder_path,'/','PER Comparison',output_extension]);
+%         figure;plot(loss_vals);title([minimal_experiment_name,'loss']);grid on;saveas(gcf,[plot_folder_path,'/','Loss',output_extension]);
+%         %% Plot Parameters
+%         for param_idx = 1:dist_obj.get_dof
+%             param_name = dist_obj.dist_params_names{param_idx};
+%             figure;plot(fading_params(:,param_idx));title(sprintf('%s Parameter: %s - Distance',minimal_experiment_name,param_name));grid on;xlabel('Distance (m)');ylabel(sprintf('%s Value',param_name));saveas(gcf,fullfile(plot_folder_path,sprintf('%s_distance%s',param_name,output_extension)));
+%         end
+%         %% LOG Likelihood
         [ll_temp,ll_d,ll_rate_temp]=general_loglikelihood(dist_obj,fading_params,data_fading_linear,fading_trunc_val_linear);
-        ll_temp = medfilt1(ll_temp,5,'omitnan');
-        ll_d = medfilt1(ll_d,5,'omitnan');
-        ll_rate_temp = medfilt1(ll_rate_temp,5,'omitnan');
-        figure;plot(ll_temp);title([minimal_experiment_name,' Log Likelihood Descreet']);xlabel('Distance (m)');ylabel('Average LL');grid on;saveas(gcf,[plot_folder_path,'/','Log Likelihood Descreet',output_extension]);
-        figure;plot(ll_d);title([minimal_experiment_name,' Log Likelihood']);grid on;xlabel('Distance (m)');ylabel('Average LL');saveas(gcf,[plot_folder_path,'/','Log Likelihood',output_extension]);
-        figure;plot(ll_d);title([minimal_experiment_name,' Log Likelihood Rate']);grid on;saveas(gcf,[plot_folder_path,'/','Log Likelihood Rate',output_extension]);
+% %         ll_temp = medfilt1(ll_temp,5,'omitnan');
+% %         ll_d = medfilt1(ll_d,5,'omitnan');
+%         ll_rate_temp = medfilt1(ll_rate_temp,5,'omitnan');
+%         figure;plot(ll_temp);title([minimal_experiment_name,' Log Likelihood Descreet']);xlabel('Distance (m)');ylabel('Average LL');grid on;saveas(gcf,[plot_folder_path,'/','Log Likelihood Descreet',output_extension]);
+%         figure;plot(ll_d);title([minimal_experiment_name,' Log Likelihood']);grid on;xlabel('Distance (m)');ylabel('Average LL');saveas(gcf,[plot_folder_path,'/','Log Likelihood',output_extension]);
+%         figure;plot(ll_d);title([minimal_experiment_name,' Log Likelihood Rate']);grid on;saveas(gcf,[plot_folder_path,'/','Log Likelihood Rate',output_extension]);
         ll(:,dist_index)=ll_temp';
         ll_dscrt(:,dist_index)=ll_d';
         ll_rate(:,dist_index) = ll_rate_temp';
+        
     end
     plot_folder_path_all_dist = fullfile('./Plots',dataset_name,experiment_name,data_file_obj.name_wo_extension);
     ll_dscrt(ll_dscrt>10)=nan;
-    figure;plot(ll);title([minimal_experiment_name_all_dist,' Log Likelihood']);xlabel('Distance(m)');ylabel('Average Log Likelihood');legend(dist_cellname);grid on;saveas(gcf,[plot_folder_path_all_dist,'/','Log Likelihood',output_extension]);
-    figure;plot(ll_dscrt);title([minimal_experiment_name_all_dist,' Log Likelihood Discrete']);legend(dist_cellname,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','Log Likelihood Descreet',output_extension]);
-    figure;plot(ll_rate);title([minimal_experiment_name_all_dist,' Log Likelihood Rate']);legend(dist_cellname,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('Coding Length Difference Rate');saveas(gcf,[plot_folder_path_all_dist,'/','Log Likelihood Rate',output_extension]);
+    figure;plot(ll);title([minimal_experiment_name_all_dist,' Log Likelihood']);xlabel('Distance(m)');ylabel('Average Log Likelihood');legend(dist_cellname);grid on;saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood',minimal_experiment_name,output_extension]);
+    figure;plot(ll_dscrt);title([minimal_experiment_name_all_dist,' Log Likelihood Discrete']);ylim([0,10]);legend(dist_cellname,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood Descreet',minimal_experiment_name,output_extension]);
+    figure;plot(medfilt1(ll_dscrt,5,'omitnan'));title([minimal_experiment_name_all_dist,' Log Likelihood Discrete']);ylim([0,10]);legend(dist_cellname,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth Log Likelihood Descreet',minimal_experiment_name,output_extension]);
+%     figure;plot(log(ll_dscrt));title([minimal_experiment_name_all_dist,' Log Likelihood Discrete (Log Domain)']);legend(dist_cellname,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('Log Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth Log domain Log Likelihood Descreet',minimal_experiment_name,output_extension]);
+%     figure;plot(ll_rate);title([minimal_experiment_name_all_dist,' Log Likelihood Rate']);legend(dist_cellname,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('Coding Length Difference Rate');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood Rate',minimal_experiment_name,output_extension]);
     per_labels = dist_cellname;per_labels(end+1) = {'Field'};
-    figure;plot([model_per,per']);title([minimal_experiment_name_all_dist,' PER']);legend(per_labels,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('PER Rate (\%)');saveas(gcf,[plot_folder_path_all_dist,'/','PER All Models',output_extension]);
+    figure;plot([model_per,per']);title([minimal_experiment_name_all_dist,' PER']);legend(per_labels,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('PER Rate (\%)');saveas(gcf,[plot_folder_path_all_dist,'/','ALL PER Models',minimal_experiment_name,output_extension]);
+    figure;plot(medfilt1([model_per,per'],5,'omitnan'));title([minimal_experiment_name_all_dist,' PER']);legend(per_labels,'Location','northwest');grid on;xlabel('Distance(m)');ylabel('PER Rate (\%)');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth PER Models',minimal_experiment_name,output_extension]);
     
 end
