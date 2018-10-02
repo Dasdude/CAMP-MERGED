@@ -1,10 +1,10 @@
 set(groot,'defaultTextInterpreter','latex');
 clc;close all;clear;
-total_samples = 1e2;
-total_trials = 200;
-per_list = [0:.09:1];
+total_samples = [1e1,1e2,1e3];
+total_trials = 50;
+per_list = [.5];
 ref_param = [.5,4];
-n_measure_list = [4,8,16,32,64];
+n_measure_list = [4,32,64];
 f = @(x,m,k) ((k./m).*((x./m).^(k-1)).*exp(-((x./m).^k)));
 f_cdf = @(x,m,k) 1-exp(-(x./m).^k);
 icdf_f = @(p,m,k) m.*(-log(1-p)).^(1./k);
@@ -30,5 +30,7 @@ n_str{i_n+2} = 'TMLE';
 % per_list = 0:.3:1;
 
 err_mat = test_measures(loss_handle_list,ref_param,make_dist_handle,per_list,total_trials,total_samples);
-err_mat_mean = median(err_mat,3,'omitnan');
-plot(per_list,err_mat_mean');legend(n_str);grid on;xlabel('PER');ylabel('$||\hat{\theta}-\theta||$';title(sprintf('Full Distribution Total Samples %d, total trials: %d',total_samples,total_trials))
+err_mat_mean_x_per = squeeze(median(err_mat,[1,4],'omitnan'));
+err_mat_mean_x_total_samples = squeeze(median(err_mat,[2,4],'omitnan'));
+plot(per_list,err_mat_mean_x_per');legend(n_str);grid on;xlabel('PER');ylabel(' $E_\theta := ||\hat{\theta}-\theta||$');title(sprintf('Full Distribution Total Samples %d, total trials: %d',total_samples,total_trials))
+plot(log10(total_samples),err_mat_mean_x_total_samples');legend(n_str);grid on;xlabel('$log(total samples)$');ylabel(' $E_\theta := ||\hat{\theta}-\theta||$');title(sprintf('Full Distribution Total Samples %d, total trials: %d',total_samples,total_trials))
