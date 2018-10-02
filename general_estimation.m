@@ -73,6 +73,12 @@ for mode_index = 1:length(dataset_files)
         display('Data Prepare Phase')
         dataset_file_path =data_file_obj.path;
         csv_data = readtable(dataset_file_path,'ReadVariableNames',true);
+        csv_data.RSS(csv_data.RSS>500) = -999;
+        if sum(strcmp(csv_data.Properties.VariableNames,'TxRxDistance'))
+            csv_data.Range = csv_data.TxRxDistance;
+            csv_data.TxRxDistance = [];
+            writetable(csv_data,dataset_file_path);
+        end
         dataset_mat_dirty = [csv_data.Range,csv_data.RSS];
         dataset_mat_dirty(dataset_mat_dirty(:,2)<-100,2) = SUDO_CENSOR_VAL;
 %         d_max = floor(prctile(csv_data.Range(csv_data.RSS<300),d_max_percentile));
