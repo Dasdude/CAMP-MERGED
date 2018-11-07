@@ -1,11 +1,11 @@
 set(groot,'defaultTextInterpreter','latex');
 set(0, 'DefaultFigureVisible', 'on');
 clc;close all;clear;
-total_samples = [100];
-total_trials = 1000;
-per_list = [0:.095:1];
-ref_param = [2,3];
-n_measure_list = [2,3,6];
+total_samples = [10000];
+total_trials = 50;
+per_list = [0:.19:1];
+ref_param = [1,2];
+n_measure_list = [2,3];
 dist_name = 'lognormal';
 
 n_str = sprintfc('%d',n_measure_list);
@@ -18,19 +18,22 @@ for i_n = 1:length(n_measure_list)
 end
 % loss_handle_list{length(loss_handle_list)+1} =@(x,per,params,tr)TMLE_loss(x,params,per,make_dist_handle,-1,tr)
 loss_handle_list{length(loss_handle_list)+1} =@(x,per,params,tr)TMLE_loss(x,params,per,make_dist_handle,0,tr)
+loss_handle_list{length(loss_handle_list)+1} =@(x,per,params,tr)TMLE_loss(x,params,per,make_dist_handle,10,tr)
 % loss_handle_list{length(loss_handle_list)+1} =@(x,per,params,tr)bmm(x,params,per,make_dist_handle,.5)
 % loss_handle_list{length(loss_handle_list)+1} =@(x,per,params,tr)bmm(x,params,per,make_dist_handle,1,3)
 % loss_handle_list{i_nc+1} = @(x,per,params,tr)loss(x,params(1),params(2),tr,per,0.1);
 % loss_handle_list{i_n+2} = @(x,per,params,tr)loss(x,params(1),params(2),tr,per,0);
 % n_str{length(n_str)+1} = 'TMLE REG';
 n_str{length(n_str)+1} = 'CMLE';
+
+n_str{length(n_str)+1} = 'CMAP';
 % n_str{length(n_str)+1} = 'Binom Ordered';
 % n_str{length(n_str)+1} = 'Binom';
 % n_str{i_n+1} = 'TMLE';
 % loss_handle_list = {@(x,per,params)categorical_loss(make_dist_handle,x,per,params,3)};
 % per_list = 0:.3:1;
 
-[err_mat,param_mat,guess_mat,loss_mat] = test_measures(loss_handle_list,ref_param,make_dist_handle,per_list,total_trials,total_samples);
+[err_mat,loss_mat] = test_measures(loss_handle_list,ref_param,make_dist_handle,per_list,total_trials,total_samples);
 
 % wrong_guesses = sum(guess_mat,4)
 % for i = 1:size(wrong_guesses,1)
