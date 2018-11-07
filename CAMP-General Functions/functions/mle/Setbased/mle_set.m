@@ -1,6 +1,7 @@
 function [params,loss_val] = mle_set(params_mu_omega_init,data,per_rate,current_index,dist_obj)
 %MLE_NAKAGAMI_TRUNCATED Summary of this function goes here
 %   Detailed explanation goes here
+fun = @(x)bernouli_map_set(dist_obj.dist_handle,data,per_rate,x,1000);
 fun = @(x)loglikelihood_set(x,data,per_rate,dist_obj.dist_handle);
 options = optimoptions(@fmincon,'Display','off','Algorithm','interior-point','MaxFunctionEvaluations',10000);
 if length(data{current_index})<10

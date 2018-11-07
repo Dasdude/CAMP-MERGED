@@ -1,6 +1,0 @@
-clc
-close all
-clear
-
-p = 0:.01:1
-ent = .5*

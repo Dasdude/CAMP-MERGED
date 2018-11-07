@@ -1,6 +1,7 @@
 function [loss] = categorical_loss(make_dist_handle,x,per,params,n)
 %CATEGORICAL_LOSS Summary of this function goes here
 %   Detailed explanation goes here
+
 f = make_dist_handle(params);
 cdf_handle = @(y)f.cdf(y);
 max_x = max(x);
@@ -47,6 +48,9 @@ p_l_ref = p_l*(1-per) + per;
 p_l_target = max(eps,min(1-eps,cdf_handle(s_vals)));
 h_ref = -(p_l_ref.*log2(min(max(p_l_ref,eps),1-eps))-(1-p_l_ref).*log2(min(max(1-p_l_ref,eps),1-eps)));
 loss = mean(((2.^(h_ref))).*(-(p_l_ref.*log2(p_l_target))-((1-p_l_ref).*log2(1-p_l_target))));
+if isnan(loss)||isinf(loss)
+    a=1;
+end
 % for i = 1:length(s_vals)
 %     p_l = categorical_emperical(x,s_vals(i));
 %     p_l_ref = p_l*(1-per) + per;

@@ -8,8 +8,13 @@ if lambda<0
     p_emp = categorical_emperical(x,t); 
 %     loss = -((mean(log(p_hat+eps)))+per*(p_emp*log(f_handle.cdf(t)+eps)+(1-p_emp)*log(1-f_handle.cdf(t)+eps)));
     loss = -((1-per)*(sum(log(p_hat+eps))+per*(p_emp*log(f_handle.cdf(t)+eps))));
+elseif lambda ==0
+    loss = -mean(log(p_hat+eps));
 else
     loss = -mean(log(p_hat+eps))+ lambda.*abs(t-f_handle.icdf(per+eps));
+end
+if isnan(loss)||isinf(loss)
+    a=1;
 end
 end
 

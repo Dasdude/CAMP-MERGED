@@ -1,0 +1,203 @@
+clc
+close all
+clear
+read_file_flag = 1;
+addpath(genpath('.'))
+
+set(groot,'defaultTextInterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
+set(0, 'DefaultFigureVisible', 'off');
+set(0, 'DefaultLineLineWidth', 4); 
+set(groot,'defaultfigureposition',[1 1 2000 1000])
+set(0,'defaultAxesFontSize',20)
+set(0,'DefaultLegendFontSize',200);
+set(0,'DefaultLineMarkerSize',15);
+%% File Names
+PLOT_EDITED_PARAMS = 0;
+% dataset_name = 'Intersection';
+dataset_folders = dir('Dataset');
+for file_idx =3:length(dataset_folders)
+    display(sprintf('[%d] %s',file_idx-2,dataset_folders(file_idx).name))
+end
+dataset_idx = str2num(input('dataset idx?','s'))+2;
+clc
+dataset_name = dataset_folders(dataset_idx).name;
+plot_folders = dir(fullfile('Plots',dataset_name));
+for file_idx =3:length(plot_folders)
+    display(sprintf('[%d] %s',file_idx-2,plot_folders(file_idx).name))
+end
+experiment_idx = str2num(input('Experiment idx?','s'))+2;
+if isempty(experiment_idx)
+    experiment_name = 'Debug';
+else
+    experiment_name = plot_folders(experiment_idx).name;
+end
+clc
+
+dataset_folder_path = fullfile('./Dataset',dataset_name);
+dataset_files = dir(fullfile(dataset_folder_path,'**/*.csv'));
+for file_idx =1:length(dataset_files)
+    file = dataset_files(file_idx);
+    [~,dataset_files(file_idx).name_wo_extension,~] = fileparts(file.name);
+    dataset_files(file_idx).path = fullfile(file.folder,file.name);
+end
+
+addpath(genpath('.'))
+%% Distribution
+dist_obj_nak = distribution_type_class(@(x)makedist('nakagami',x(1),x(2)),'nakagami',{'mu','omega'},[0.5,0],[inf,inf]);
+dist_obj_logn = distribution_type_class(@(x)makedist('lognormal',x(1),x(2)),'lognormal',{'mu','sigma'},[-inf,0],[3,3]);
+dist_obj_wei = distribution_type_class(@(x)makedist('weibull',x(1),x(2)),'weibull',{'A','B'},[0,0],[5,5]);
+dist_obj_ri = distribution_type_class(@(x)makedist('rician',x(1),x(2)),'rician',{'s','sigma'},[0,0],[5,5]);
+dist_obj_ray = distribution_type_class(@(x)makedist('rayleigh',x(1)),'rayleigh',{'B'},[0],[5]);
+dist_obj_cell = {dist_obj_logn,dist_obj_wei,dist_obj_nak};
+dist_cellname = {'Log-Normal','Weibull','Nakagami'};
+
+if PLOT_EDITED_PARAMS
+    output_extension = '_edit.png';
+    param_file_name = 'Parameters_edit.mat';
+else
+    output_extension_list = {'','.fig','.png'};
+    param_file_name = 'Parameters.mat';
+end
+noise_level = -98;
+pkt_size = -1;
+TRUNCATION_VALUE = -90;
+med_filt_size = 5;
+censor_function_handle = @(x)censor_function(x,noise_level,pkt_size,TRUNCATION_VALUE);
+median_per_inc_all = zeros(800,6);
+per_all = zeros(800,6);
+scenario_names = {};
+for mode_index = 1:6
+    if mode_index == 100
+        xlim_val = 250;
+    else
+        xlim_val = 800;
+    end
+%     mode = mode_list{mode_index};
+    read_file_flag =1;
+    
+    data_file_obj = dataset_files(mode_index);
+    %% Dataset prepare
+    sprintf('Data Prepare Phase')
+    
+    if logical(exist('dataset_file_path'))&&strcmp(dataset_file_path,data_file_obj.path)
+        read_file_flag = 0;
+    end
+    dataset_file_path  = data_file_obj.path;
+    
+    for dist_index = 1:length(dist_cellname)
+        
+        close all
+        dist_obj = dist_obj_cell{dist_index};
+        dist_name = dist_obj.dist_name;dist_name = [upper(dist_name(1)),dist_name(2:end)];
+        
+        minimal_experiment_name = [data_file_obj.name_wo_extension,' ',dist_name,' '];
+        scenario_names{mode_index} = data_file_obj.name_wo_extension;
+        sprintf('%s',minimal_experiment_name)
+        minimal_experiment_name_all_dist = [data_file_obj.name_wo_extension,' '];
+        relative_experiment_folder_path = fullfile(dataset_name,experiment_name,data_file_obj.name_wo_extension,dist_obj.dist_name);
+        parameter_folder = fullfile(relative_experiment_folder_path,'Results');
+        parameter_path = fullfile(parameter_folder,param_file_name);
+        plot_folder_path = fullfile('./Plots',relative_experiment_folder_path);
+        dest_plot_folder_path = fullfile('./Paper Plots',relative_experiment_folder_path);
+        mkdir(dest_plot_folder_path);
+        %% Load Params
+        load(fullfile(plot_folder_path,'Datamat.mat'));
+        median_per_inc_all(:,mode_index) = percentiles_rssi_per_inc(:,4);
+        per_all(:,mode_index) = per';
+%         break;
+        try
+            load(parameter_path);
+        catch err
+            display(err)
+            continue
+        end
+        fading_params = medfilt1(fading_params,med_filt_size);
+        medfilt = @(x)medfilt1(x,med_filt_size);
+        percentiles_generated = medfilt(percentiles_generated);
+        percentiles_generated_trunc = medfilt(percentiles_generated_trunc);
+%         percentiles_generated_trunc = medfilt(percentiles_rssi_per_inc);
+        generated_per= medfilt(generated_per);
+        per = medfilt(per);
+        
+        fading_params = medfilt(fading_params);
+        fading_params_smooth = fading_params;
+        fading_params_smooth(:,1) = smooth(fading_params(:,1),50,'lowess');
+        fading_params_smooth(:,2) = smooth(fading_params(:,2),50,'lowess');
+        generated_fading_linear_smooth = sample_generator(dist_obj,fading_params_smooth,1e3);
+        generated_fading_dbm_smooth = linear2dbm(generated_fading_linear_smooth);
+        generated_rssi_dbm_smooth = add_fading(pathloss,generated_fading_dbm_smooth,TX_POWER);
+        [generated_rssi_dbm_truncated_smooth,generated_per_smooth,gen_pl_stat_smooth] = censor_data(generated_rssi_dbm_smooth,censor_function_handle);
+        percentile_generation_values = [5,10,25,50,75,90,95];
+        percentiles_generated = percentile_array(percentile_generation_values,generated_rssi_dbm_smooth);
+        percentiles_generated_trunc_smooth = percentile_array(percentile_generation_values,generated_rssi_dbm_truncated_smooth);
+%         percentiles_rssi = percentile_array(percentile_generation_values,data_dbm_cell_sm);
+%         percentiles_rssi_per_inc = percentile_array_per(percentile_generation_values,data_dbm_cell,per*100);
+        percentiles_rssi_gen_per_inc = percentile_array_per(percentile_generation_values,generated_rssi_dbm_truncated_smooth,generated_per_smooth*100);
+        %% Parameters
+        d_max = length(fading_params);
+        TRUNCATION_VALUE=-90;
+        LIGHT_SPEED=3*10^8;
+        lambda=LIGHT_SPEED/CARRIER_FREQ;
+        %% Pathloss
+        pathloss = pathloss_gen_2ray(TX_HEIGHT,RX_HEIGHT,EPSILON,ALPHA,lambda,d_max);
+        %% Percentile Plot
+        non_trunc_ylim = [-130,-30];
+        percentile_generation_values = [5,10,25,50,75,90,95];
+        percentile_string_array = sprintfc('%d %%',percentile_generation_values);        
+        for oe_idx = 1:length(output_extension_list)
+        output_extension = output_extension_list{oe_idx};
+        indices = [1,3,4,5,7];percentile_plot(indices,'Percentile ALL Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,dest_plot_folder_path,output_extension,xlim_val);
+        indices = [1,3,4,5,7];percentile_plot(indices,'Percentile ALL Trunc',percentiles_rssi_gen_per_inc,percentiles_rssi,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,dest_plot_folder_path,output_extension,xlim_val);
+        %% PER Plot
+        marker = 'o'
+        figure('DefaultLegendFontSize',30,'DefaultLegendFontSizeMode','manual'); plot(100*generated_per,'Marker',marker,'MarkerIndices',1:40:800);hold on;plot(100*per);grid on;title([minimal_experiment_name,'PER Value Comparison']);xlim([1,xlim_val]);ylabel('Rate');xlabel('Distance (m)');legend('Model','Field','Location','best');saveas(gcf,[dest_plot_folder_path,'/','PER Comparison',minimal_experiment_name,output_extension]);
+        figure;plot(loss_vals);title([minimal_experiment_name,'loss']);grid on;xlim([1,xlim_val]);saveas(gcf,[dest_plot_folder_path,'/','Loss',output_extension]);
+        
+        %% Plot Parameters
+%         fading_params_lowpass = lowpass(fading_params,2,800);
+        for param_idx = 1:dist_obj.get_dof
+            param_name = dist_obj.dist_params_names{param_idx};
+            figure;plot(fading_params(:,param_idx));title(sprintf('%s Parameter: %s - Distance',minimal_experiment_name,param_name));grid on;xlabel('Distance (m)');xlim([1,xlim_val]);ylabel(sprintf('%s Value',param_name));saveas(gcf,fullfile(dest_plot_folder_path,sprintf('%s_distance %s %s',param_name,minimal_experiment_name,output_extension)));
+            figure;plot(fading_params_smooth(:,param_idx));title(sprintf('%s Smooth Parameter: %s - Distance',minimal_experiment_name,param_name));grid on;xlabel('Distance (m)');xlim([1,xlim_val]);ylabel(sprintf('%s Value',param_name));saveas(gcf,fullfile(dest_plot_folder_path,sprintf('%s_distance Smooth %s %s',param_name,minimal_experiment_name,output_extension)));
+        end
+
+        end
+    end
+        
+end
+% per_all = medfilt1(per_all,med);
+% % per_all = medfilt1(per_all,30);
+% median_per_inc_all = medfilt1(median_per_inc_all,10);
+% figure('DefaultLegendFontSize',30,'DefaultLegendFontSizeMode','manual'); plot(100*per_all);grid on;title(['PER Value Comparison']);xlim([1,600]);ylabel('Rate');xlabel('Distance (m)');legend(scenario_names,'Location','best');saveas(gcf,[dest_plot_folder_path,'/','PER Comparison ALL Dataset',minimal_experiment_name,'.fig']);
+% figure('DefaultLegendFontSize',30,'DefaultLegendFontSizeMode','manual'); plot(median_per_inc_all);grid on;title(['Percentile Comparison']);xlim([1,600]);ylim([-94,-55]);ylabel('Rate');xlabel('Distance (m)');legend(scenario_names,'Location','best');saveas(gcf,[dest_plot_folder_path,'/','PER Comparison ALL Dataset',minimal_experiment_name,'.fig']);
+close all
+function [] = percentile_plot(indices,file_name,percentile_model,percentile_field,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension,xlim_val)
+        default_blue = [0, 0.4470, 0.7410];
+        default_orange = [0.8500, 0.3250, 0.0980];
+        percentile_string_array = sprintfc('%d%%',percentile_generation_values(indices));
+        med_filt_size = 5;
+        str_perc = strjoin(percentile_string_array);
+        str_model =  strcat(str_perc,'Model');
+        str_field =  strcat(str_perc,'Field');
+        pstr_model = strcat(percentile_string_array,' Model');
+        pstr_field = strcat(percentile_string_array,' Field');
+%         percentiles_generated = medfilt1(percentile_model,med_filt_size);
+%         percentiles_rssi_per_inc = medfilt1(percentile_field,med_filt_size);
+        marker = 'o'
+        figure('DefaultLegendFontSize',27,'DefaultLegendFontSizeMode','manual');plot_handle_m = plot(repmat([1:800]',1,5),percentile_model(:,indices),'Color',default_blue,'Marker',marker,'MarkerIndices',1:40:800);hold on ;xlim([1,xlim_val]);plot_handle_f = plot(percentile_field(:,indices),'Color',default_orange);
+        grid on;
+        ylim(non_trunc_ylim);
+        title([minimal_experiment_name,'Percentile']);
+        ylabel('RSS (dbm)','interpreter','latex');
+        xlabel('Distance (m)');
+        h = zeros(2, 1);
+        h(1) = plot(NaN,NaN,'Color',default_blue,'Marker',marker);
+        h(2) = plot(NaN,NaN,'Color',default_orange);
+
+        legend(h, str_model,str_field);
+%         legend(pstr_model,pstr_field)
+%         legend([plot_handle_m,plot_handle_f],{'Model','Field'});
+        saveas(gcf,[plot_folder_path,'/',file_name,minimal_experiment_name,  output_extension]);
+        
+end

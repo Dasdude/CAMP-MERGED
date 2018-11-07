@@ -7,6 +7,7 @@ addpath(genpath('.'))
 set(groot,'defaultTextInterpreter','latex');
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
 set(0, 'DefaultFigureVisible', 'off');
+set(0, 'DefaultLineLineWidth', .5);
 %% File Names
 PLOT_EDITED_PARAMS = 0;
 % dataset_name = 'Intersection';
@@ -44,14 +45,14 @@ dist_obj_logn = distribution_type_class(@(x)makedist('lognormal',x(1),x(2)),'log
 dist_obj_wei = distribution_type_class(@(x)makedist('weibull',x(1),x(2)),'weibull',{'A','B'},[0,0],[5,5]);
 dist_obj_ri = distribution_type_class(@(x)makedist('rician',x(1),x(2)),'rician',{'s','sigma'},[0,0],[5,5]);
 dist_obj_ray = distribution_type_class(@(x)makedist('rayleigh',x(1)),'rayleigh',{'B'},[0],[5]);
-dist_obj_cell = {dist_obj_logn,dist_obj_wei};
-dist_cellname = {'Log-Normal','Weibull'};
+dist_obj_cell = {dist_obj_logn,dist_obj_wei,dist_obj_nak};
+dist_cellname = {'Log-Normal','Weibull','Nakagami'};
 
 if PLOT_EDITED_PARAMS
     output_extension = '_edit.png';
     param_file_name = 'Parameters_edit.mat';
 else
-    output_extension = '.png';
+    output_extension_list = {'','.fig','.png'};
     param_file_name = 'Parameters.mat';
 end
 noise_level = -98;
@@ -71,9 +72,7 @@ for mode_index = 1:length(dataset_files)
         read_file_flag = 0;
     end
     dataset_file_path  = data_file_obj.path;
-    if read_file_flag
-        csv_data = readtable(dataset_file_path,'ReadVariableNames',true);
-    end
+    csv_data = readtable(dataset_file_path,'ReadVariableNames',true);
     if sum(strcmp(csv_data.Properties.VariableNames,'TxRxDistance'))
             csv_data.Range = csv_data.TxRxDistance;
             csv_data.TxRxDistance = [];
@@ -103,7 +102,7 @@ for mode_index = 1:length(dataset_files)
             display(err)
             continue
         end
-%         fading_params = medfilt1(fading_params,med_filt_size);
+        fading_params = medfilt1(fading_params,med_filt_size);
         ll = ll(1:size(fading_params,1),:);
         ll_dscrt = ll_dscrt(1:size(fading_params,1),:);
         ll_rate = ll_rate(1:size(fading_params,1),:);
@@ -139,7 +138,7 @@ for mode_index = 1:length(dataset_files)
         generated_rssi_dbm_mean = funoncellarray1input(generated_rssi_dbm,@mean);
         model_per(:,dist_index) = generated_per';
            %% Pathloss Compare Plot
-        figure;subplot(2,1,1);plot(generated_rssi_dbm_mean);hold;plot(data_dbm_mean);title([minimal_experiment_name,'Mean Comparison']);grid on;legend('Model','Field');subplot(2,1,2);plot(aprx_per);title('PER');ylabel('RSS');saveas(gcf,[plot_folder_path,'/','Mean Model vs Field',output_extension]);
+        figure;subplot(2,1,1);plot(generated_rssi_dbm_mean);hold;plot(data_dbm_mean);title([minimal_experiment_name,'Mean Comparison']);grid on;legend('Model','Field');subplot(2,1,2);plot(aprx_per);title('PER');ylabel('RSS');saveas(gcf,[plot_folder_path,'/','Mean Model vs Field',output_extension_list{1}]);
         %% Percentile Plot
         non_trunc_ylim = [-130,-30];
         percentile_generation_values = [5,10,25,50,75,90,95];
@@ -149,32 +148,14 @@ for mode_index = 1:length(dataset_files)
         percentiles_rssi = percentile_array(percentile_generation_values,data_dbm_cell);
         percentiles_rssi_per_inc = percentile_array_per(percentile_generation_values,data_dbm_cell,per*100);
         percentiles_rssi_gen_per_inc = percentile_array_per(percentile_generation_values,generated_rssi_dbm_truncated,generated_per*100);
-        indices = [2,4,6];percentile_plot(indices,'Percentile 10 Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
-        indices = [3,4,5];percentile_plot(indices,'Percentile 25 Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
-        indices = [1,4,7];percentile_plot(indices,'Percentile 5 Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
+        save([plot_folder_path,'/','Datamat.mat'],'percentiles_generated','percentiles_generated_trunc','percentiles_rssi','percentiles_rssi_per_inc','percentiles_rssi_gen_per_inc','generated_per','per','percentile_generation_values','pathloss');
+        for oe_idx = 1:length(output_extension_list)
+        output_extension = output_extension_list{oe_idx};
+%         indices = [2,4,6];percentile_plot(indices,'Percentile 10 Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
+%         indices = [3,4,5];percentile_plot(indices,'Percentile 25 Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
+%         indices = [1,4,7];percentile_plot(indices,'Percentile 5 Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
         indices = [1,3,4,5,7];percentile_plot(indices,'Percentile ALL Full',percentiles_generated,percentiles_rssi_per_inc,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
-        
-%         indices = [2,4,6];percentile_plot(indices,'Percentile 10 Trunc',percentiles_generated_trunc,percentiles_rssi,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
-%         indices = [3,4,5];percentile_plot(indices,'Percentile 25 Trunc',percentiles_generated_trunc,percentiles_rssi,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
-%         indices = [1,4,7];percentile_plot(indices,'Percentile 5 Trunc',percentiles_generated_trunc,percentiles_rssi,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
-%         indices = [1:7];percentile_plot(indices,'Percentile ALL Trunc',percentiles_generated_trunc,percentiles_rssi,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
-%         
-%         
-%         indices = [2,4,6];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend(pstr_model,pstr_field);saveas(gcf,[plot_folder_path,'/',file_name,minimal_experiment_name,  output_extension]);
-%         indices = [2,4,6];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend(pstr_model,pstr_field);saveas(gcf,[plot_folder_path,'/',file_name,minimal_experiment_name,  output_extension]);
-%         indices = [2,4,6];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend(pstr_model,pstr_field);saveas(gcf,[plot_folder_path,'/',file_name,minimal_experiment_name,  output_extension]);
-%         indices = [2,4,6];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend(pstr_model,pstr_field);saveas(gcf,[plot_folder_path,'/',file_name,minimal_experiment_name,  output_extension]);
-%         indices = [2,4,6];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend(pstr_model,pstr_field);saveas(gcf,[plot_folder_path,'/',file_name,minimal_experiment_name,  output_extension]);
-%         
-        
-        
-%         indices = [2,4,6];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)','interpreter','latex');xlabel('Distance (m)');legend('10% model','50% model','90% model','10% field','50% field','90% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 10 Full',minimal_experiment_name,  output_extension]);
-%         indices = [2,4,6];figure;plot(percentiles_generated_trunc(:,indices));hold on ;plot(percentiles_rssi(:,indices));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('10% model','50% model','90% model','10% field','50% field','90% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 10',minimal_experiment_name,output_extension]);
-%         indices = [3,4,5];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('25% model','50% model','75% model','25% field','50% field','75% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 25 Full',minimal_experiment_name,output_extension]);
-%         indices = [3,4,5];figure;plot(percentiles_generated_trunc(:,indices));hold on ;plot(percentiles_rssi(:,indices));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('25% model','50% model','75% model','25% field','50% field','75% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 25',minimal_experiment_name,output_extension]);
-%         indices = [1,4,7];figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('5% model','50% model','95% model','5% field','50% field','95% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 5 Full',minimal_experiment_name,output_extension]);
-%         indices = 1:7;figure;plot(percentiles_generated(:,indices));hold on ;plot(percentiles_rssi_per_inc(:,indices));grid on;ylim(non_trunc_ylim);title([minimal_experiment_name,'Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('5% model','50% model','95% model','5% field','50% field','95% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI 5 Full',minimal_experiment_name,output_extension]);
-%         indices = [1,4,7];figure;plot(percentiles_generated_trunc(:,indices));hold on ;plot(percentiles_rssi(:,indices));grid on;title([minimal_experiment_name,'Truncated Percentile']);ylabel('RSS (dbm)');xlabel('Distance (m)');legend('5% model','50% model','95% model','5% field','50% field','95% field');saveas(gcf,[plot_folder_path,'/','Percentile RSSI Truncated 5',minimal_experiment_name,output_extension]);
+        indices = [1,3,4,5,7];percentile_plot(indices,'Percentile ALL Full Trunc',percentiles_generated_trunc,percentiles_rssi,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension);
         %% PER Plot
         figure;plot(packet_loss_stat(:,2));hold;plot(packet_loss_stat(:,2)-packet_loss_stat(:,1));xlabel('Distance(m)');ylabel('Number of Samples');grid on;title([minimal_experiment_name,'Total Samples vs Received Samples']);legend('Total Samples','Recieved Samples');saveas(gcf,[plot_folder_path,'/','Samples Received vs Total',output_extension]);
         figure; plot(100*generated_per);hold on;plot(100*per);grid on;title([minimal_experiment_name,'PER Value Comparison']);ylabel('Rate');xlabel('Distance (m)');legend('Model','Field','Location','best');saveas(gcf,[plot_folder_path,'/','PER Comparison',output_extension]);
@@ -195,22 +176,23 @@ for mode_index = 1:length(dataset_files)
         ll(:,dist_index)=ll_temp';
         ll_dscrt(:,dist_index)=ll_d';
         ll_rate(:,dist_index) = ll_rate_temp';
+        
 %         funoncellarray1input(generated_rssi_dbm_truncated,@floor);
 %         funoncellarray2input(generated_rssi_dbm_truncated,   data_dbm_cell,@kstest2)
-        
+        end
     end
-    plot_folder_path_all_dist = fullfile('./Plots',dataset_name,experiment_name,data_file_obj.name_wo_extension);
-    ll_dscrt(ll_dscrt>10)=nan;
-    figure;plot(ll);title([minimal_experiment_name_all_dist,' Log Likelihood']);xlabel('Distance(m)');ylabel('Average Log Likelihood');legend(dist_cellname);grid on;saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood',minimal_experiment_name_all_dist,output_extension]);
-    figure;plot(packet_loss_stat(:,2));hold;plot(packet_loss_stat(:,2)-packet_loss_stat(:,1));xlabel('Distance(m)');ylabel('Number of Samples');grid on;title([minimal_experiment_name_all_dist,'Total Samples vs Received Samples']);legend('Total Samples','Recieved Samples');saveas(gcf,[plot_folder_path_all_dist,'/','Samples Received vs Total ALL',output_extension]);
-    figure;plot(ll_dscrt);title([minimal_experiment_name_all_dist,' Log Likelihood Discrete']);ylim([0,10]);legend(dist_cellname,'Location','best');grid on;xlabel('Distance(m)');ylabel('Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood Descreet',minimal_experiment_name_all_dist,output_extension]);
-    figure;plot(medfilt1(ll_dscrt,5,'omitnan'));title([minimal_experiment_name_all_dist,' Log Likelihood Discrete']);ylim([0,10]);legend(dist_cellname,'Location','best');grid on;xlabel('Distance(m)');ylabel('Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth Log Likelihood Descreet',minimal_experiment_name_all_dist,output_extension]);
-%     figure;plot(log(ll_dscrt));title([minimal_experiment_name_all_dist,' Log Likelihood Discrete (Log Domain)']);legend(dist_cellname,'Location','best');grid on;xlabel('Distance(m)');ylabel('Log Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth Log domain Log Likelihood Descreet',minimal_experiment_name,output_extension]);
-%     figure;plot(ll_rate);title([minimal_experiment_name_all_dist,' Log Likelihood Rate']);legend(dist_cellname,'Location','best');grid on;xlabel('Distance(m)');ylabel('Coding Length Difference Rate');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood Rate',minimal_experiment_name,output_extension]);
-    per_labels = dist_cellname;per_labels(end+1) = {'Field'};
-    figure;plot([100*model_per,100*per']);title([minimal_experiment_name_all_dist,' PER']);legend(per_labels,'Location','best');grid on;xlabel('Distance(m)');ylabel('PER Rate (\%)');saveas(gcf,[plot_folder_path_all_dist,'/','ALL PER Models',minimal_experiment_name_all_dist,output_extension]);
-    figure;plot(medfilt1([100*model_per,100*per'],5,'omitnan'));title([minimal_experiment_name_all_dist,' PER']);legend(per_labels,'Location','best');grid on;xlabel('Distance(m)');ylabel('PER Rate (\%)');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth PER Models',minimal_experiment_name_all_dist,output_extension]);
-   
+    for oe_idx = 1:length(output_extension_list)
+        output_extension = output_extension_list{oe_idx};
+        plot_folder_path_all_dist = fullfile('./Plots',dataset_name,experiment_name,data_file_obj.name_wo_extension);
+        ll_dscrt(ll_dscrt>10)=nan;
+        figure;plot(ll);title([minimal_experiment_name_all_dist,' Log Likelihood']);xlabel('Distance(m)');ylabel('Average Log Likelihood');legend(dist_cellname);grid on;saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood',minimal_experiment_name_all_dist,output_extension]);
+        figure;plot(packet_loss_stat(:,2));hold;plot(packet_loss_stat(:,2)-packet_loss_stat(:,1));xlabel('Distance(m)');ylabel('Number of Samples');grid on;title([minimal_experiment_name_all_dist,'Total Samples vs Received Samples']);legend('Total Samples','Recieved Samples');saveas(gcf,[plot_folder_path_all_dist,'/','Samples Received vs Total ALL',output_extension]);
+        figure;plot(ll_dscrt);title([minimal_experiment_name_all_dist,' Log Likelihood Discrete']);ylim([0,10]);legend(dist_cellname,'Location','best');grid on;xlabel('Distance(m)');ylabel('Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Log Likelihood Descreet',minimal_experiment_name_all_dist,output_extension]);
+        figure;plot(medfilt1(ll_dscrt,5,'omitnan'));title([minimal_experiment_name_all_dist,' Log Likelihood Discrete']);ylim([0,10]);legend(dist_cellname,'Location','best');grid on;xlabel('Distance(m)');ylabel('Average Log Likelihood');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth Log Likelihood Descreet',minimal_experiment_name_all_dist,output_extension]);
+        per_labels = dist_cellname;per_labels(end+1) = {'Field'};
+        figure;plot([100*model_per,100*per']);title([minimal_experiment_name_all_dist,' PER']);legend(per_labels,'Location','best');grid on;xlabel('Distance(m)');ylabel('PER Rate (\%)');saveas(gcf,[plot_folder_path_all_dist,'/','ALL PER Models',minimal_experiment_name_all_dist,output_extension]);
+        figure;plot(medfilt1([100*model_per,100*per'],5,'omitnan'));title([minimal_experiment_name_all_dist,' PER']);legend(per_labels,'Location','best');grid on;xlabel('Distance(m)');ylabel('PER Rate (\%)');saveas(gcf,[plot_folder_path_all_dist,'/','ALL Smooth PER Models',minimal_experiment_name_all_dist,output_extension]);
+    end
 end
 function [] = percentile_plot(indices,file_name,percentile_model,percentile_field,percentile_generation_values,minimal_experiment_name,non_trunc_ylim,plot_folder_path,output_extension)
         default_blue = [0, 0.4470, 0.7410];

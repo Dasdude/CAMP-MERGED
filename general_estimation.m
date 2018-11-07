@@ -35,7 +35,7 @@ dist_obj_wei = distribution_type_class(@(x)makedist('weibull',x(1),x(2)),'weibul
 dist_obj_ri = distribution_type_class(@(x)makedist('rician',x(1),x(2)),'rician',{'s','sigma'},[0,0],[5,5]);
 dist_obj_ray = distribution_type_class(@(x)makedist('rayleigh',x(1)),'rayleigh',{'B'},[0],[5]);
 dist_obj_cell = {dist_obj_nak,dist_obj_logn,dist_obj_wei,dist_obj_ri,dist_obj_ray};
-dist_obj = dist_obj_cell{5};
+% dist_obj = dist_obj_cell{5};
 %% PARMETERS
 SUDO_CENSOR_VAL = -110;
 FADING_BIN_SIZE = 1;
@@ -50,7 +50,7 @@ d_min = 1;
 noise_level = -98;pkt_size=-1;
 %% ESTIMATION PARAMETERS
 show_gassuan_dist = 0;
-show_nakagami_dist = 1;
+show_nakagami_dist = 0;
 calc_gaussian = 0;
 fixed_pathloss=1;
 min_samples_per_cell = 10; % for estimating Fading
@@ -60,12 +60,15 @@ d_max_percentile = 99.99;
 censor_function_handle = @(x)censor_function(x,noise_level,pkt_size,TRUNCATION_VALUE);
 for mode_index = 1:length(dataset_files)
     data_file_obj = dataset_files(mode_index);
-    for dist_index = 1:5
+    display('Data Prepare Phase')
+    dataset_file_path =data_file_obj.path;
+    csv_data = readtable(dataset_file_path,'ReadVariableNames',true);
+    csv_data.RSS(csv_data.RSS>500) = -999;
+    for dist_index = 1:3
         
         dist_obj = dist_obj_cell{dist_index};
         dist_obj.censor_function = censor_function_handle;
         close all
-%         mode_list = {SAME_LEG,DIF_LEG_LOS,DIF_LEG_NLOS};
         %% File Preperation
         relative_experiment_folder_path = fullfile(dataset_name,experiment_name,data_file_obj.name_wo_extension,dist_obj.dist_name);
         mkdir(['Plots/',relative_experiment_folder_path]);
